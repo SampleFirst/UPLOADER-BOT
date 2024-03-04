@@ -1,35 +1,44 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# (c) Thank you @LazyDeveloperr 
-
-# the logging things
 import logging
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
 import os
-
-# the secret configuration specific things
-
+from aiohttp import web
+from pyrogram import Client
 from config import Config
+from plugins import web_server
 
-import pyrogram
-logging.getLogger("pyrogram").setLevel(logging.WARNING)
+# Set up logging configurations
+logging.basicConfig(level=logging.INFO)
+logging.getLogger("pyrogram").setLevel(logging.ERROR)
 
+PORT = 8080
 
-if __name__ == "__main__" :
-    # create download directory, if not exist
-    if not os.path.isdir(Config.DOWNLOAD_LOCATION):
-        os.makedirs(Config.DOWNLOAD_LOCATION)
-    plugins = dict(
-        root="plugins"
-    )
-    app = pyrogram.Client(
-        "BewafaAngelPriya",
-        bot_token=Config.BOT_TOKEN,
-        api_id=Config.API_ID,
-        api_hash=Config.API_HASH,
-        plugins=plugins
-    )
-    app.run()
+# Create download directory if it doesn't exist
+if not os.path.isdir(Config.DOWNLOAD_LOCATION):
+    os.makedirs(Config.DOWNLOAD_LOCATION)
+
+class Bot(Client):
+
+    def __init__(self):
+        super().__init__(
+            bot_token=Config.BOT_TOKEN,
+            api_id=Config.API_ID,
+            api_hash=Config.API_HASH,
+            workers=200,
+            plugins={"root": "plugins"},
+            sleep_threshold=10,
+        )
+
+    async def start(self):
+        app = web.Application()
+        app.add_routes([web.get("/", web_server)])
+        runner = web.AppRunner(app)
+        await runner.setup()
+        bind_address = "0.0.0.0"
+        await web.TCPSite(runner, bind_address, PORT).start()
+
+    async def stop(self, *args):
+        await super().stop()
+        logging.info("Bot stopped. Bye.")
+
+# Create and run the bot instance
+app = Bot()
+app.run()
