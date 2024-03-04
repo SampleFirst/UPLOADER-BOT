@@ -1,17 +1,17 @@
 from pyrogram import Client as Clinton
-from config import *
+from config import Config
 import os
 
 class Bot(Clinton):
-    if not os.path.isdir(DOWNLOAD_LOCATION):
-        os.makedirs(DOWNLOAD_LOCATION)
+    if not os.path.isdir(Config.DOWNLOAD_LOCATION):
+        os.makedirs(Config.DOWNLOAD_LOCATION)
 
     def __init__(self):
         super().__init__(
-            session_name=SESSION_NAME,
-            api_id=API_ID,
-            api_hash=API_HASH,
-            bot_token=BOT_TOKEN,
+            session_name=Config.SESSION_NAME,
+            api_id=Config.API_ID,
+            api_hash=Config.API_HASH,
+            bot_token=Config.BOT_TOKEN,
             workers=100,
             plugins={"root": "main"},
             sleep_threshold=10,
